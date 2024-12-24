@@ -1,0 +1,115 @@
+services:
+  zoo1:
+    image: zookeeper:3.9.3-jre-17
+    hostname: zoo1
+    ports:
+      - 2181:2181
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2182 server.3=zoo3:2888:3888;2183
+      ZOO_4LW_COMMANDS_WHITELIST: "*"
+
+  zoo2:
+    image: zookeeper:3.9.3-jre-17
+    hostname: zoo2
+    ports:
+      - 2182:2182
+    environment:
+      ZOO_MY_ID: 2
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2182 server.3=zoo3:2888:3888;2183
+      ZOO_4LW_COMMANDS_WHITELIST: "*"
+
+  zoo3:
+    image: zookeeper:3.9.3-jre-17
+    hostname: zoo3
+    ports:
+      - 2183:2183
+    environment:
+      ZOO_MY_ID: 3
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2182 server.3=zoo3:2888:3888;2183
+      ZOO_4LW_COMMANDS_WHITELIST: "*"
+
+  kafka1:
+    image: bitnami/kafka:3.8.1
+    hostname: kafka1
+    ports:
+      - 9192:9192
+    environment:
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_LISTENERS: PLAINTEXT://kafka1:9192
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9192
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183/kafka
+      KAFKA_CFG_NUM_PARTITIONS: 8
+      KAFKA_CFG_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_CFG_MIN_INSYNC_REPLICAS: 2
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    depends_on:
+      - zoo1
+      - zoo2
+      - zoo3
+
+  kafka2:
+    image: bitnami/kafka:3.8.1
+    hostname: kafka2
+    ports:
+      - 9292:9292
+    environment:
+      KAFKA_CFG_NODE_ID: 2
+      KAFKA_CFG_LISTENERS: PLAINTEXT://kafka2:9292
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9292
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183/kafka
+      KAFKA_CFG_NUM_PARTITIONS: 8
+      KAFKA_CFG_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_CFG_MIN_INSYNC_REPLICAS: 2
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    depends_on:
+      - zoo1
+      - zoo2
+      - zoo3
+
+  kafka3:
+    image: bitnami/kafka:3.8.1
+    hostname: kafka3
+    ports:
+      - 9392:9392
+    environment:
+      KAFKA_CFG_NODE_ID: 3
+      KAFKA_CFG_LISTENERS: PLAINTEXT://kafka3:9392
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9392
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183/kafka
+      KAFKA_CFG_NUM_PARTITIONS: 8
+      KAFKA_CFG_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_CFG_MIN_INSYNC_REPLICAS: 2
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    depends_on:
+      - zoo1
+      - zoo2
+      - zoo3
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 9999:8080
+    depends_on:
+      - zoo1
+      - zoo2
+      - zoo3
+      - kafka1
+      - kafka2
+      - kafka3
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true
+      KAFKA_CLUSTERS_0_NAME: Kafka-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka1:9192,kafka2:9292,kafka3:9392"
+      KAFKA_CLUSTERS_0_ZOOKEEPER: "zoo1:2181,zoo2:2182,zoo3:2183"
+
+  zoonavigator:
+    image: elkozmon/zoonavigator:latest
+    environment:
+      HTTP_PORT: 8001
+    ports:
+      - 8001:8001
+  
